@@ -15,17 +15,6 @@ func New(input string) *Lexer {
 	return lex
 }
 
-// Get the next character and advance read position by 1
-func (l *Lexer) readChar() {
-	if l.readPosition >= len(l.input) {
-		l.ch = 0 // ASCII for NUL character
-	} else {
-		l.ch = l.input[l.readPosition]
-	}
-	l.position = l.readPosition
-	l.readPosition += 1
-}
-
 // Get the next token in the Lexer
 func (lex *Lexer) NextToken() token.Token {
 	var tok token.Token
@@ -34,13 +23,27 @@ func (lex *Lexer) NextToken() token.Token {
 
 	switch lex.ch {
 	case '=':
-		tok = newToken(token.ASSIGN, lex.ch)
+		if lex.peekChar() == '=' {
+			initialCh := lex.ch
+			lex.readChar()
+			literal := string(initialCh) + string(lex.ch)
+			tok = token.Token{Type: token.EQ, Literal: literal}
+		} else {
+			tok = newToken(token.ASSIGN, lex.ch)
+		}
 	case '+':
 		tok = newToken(token.PLUS, lex.ch)
 	case '-':
 		tok = newToken(token.MINUS, lex.ch)
 	case '!':
-		tok = newToken(token.BANG, lex.ch)
+		if lex.peekChar() == '=' {
+			initialCh := lex.ch
+			lex.readChar()
+			literal := string(initialCh) + string(lex.ch)
+			tok = token.Token{Type: token.NOT_EQ, Literal: literal}
+		} else {
+			tok = newToken(token.BANG, lex.ch)
+		}
 	case '*':
 		tok = newToken(token.ASTERISK, lex.ch)
 	case '/':
@@ -80,6 +83,25 @@ func (lex *Lexer) NextToken() token.Token {
 
 	lex.readChar()
 	return tok
+}
+
+// Get the next character and advance read position by 1
+func (l *Lexer) readChar() {
+	if l.readPosition >= len(l.input) {
+		l.ch = 0 // ASCII for NUL character
+	} else {
+		l.ch = l.input[l.readPosition]
+	}
+	l.position = l.readPosition
+	l.readPosition += 1
+}
+
+// Get the next character without advancing position
+func (lex *Lexer) peekChar() byte {
+	if lex.readPosition >= len(lex.input) {
+		return 0
+	}
+	return lex.input[lex.readPosition]
 }
 
 func isDigit(ch byte) bool {
