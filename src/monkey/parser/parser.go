@@ -32,7 +32,7 @@ func (par *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
 
-	for par.curToken.Type != token.EOF {
+	for !par.curTokenIs(token.EOF) {
 		stmt := par.parseStatement()
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)
@@ -64,6 +64,8 @@ func (par *Parser) parseLetStatement() ast.Statement {
 		return nil
 	}
 	par.advanceTokens()
+
+	//TODO: Skipping expressions for now (until I learn how to do it)
 
 	for !par.curTokenIs(token.SEMICOLON) {
 		par.advanceTokens()
