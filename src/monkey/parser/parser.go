@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"monkey/ast"
 	"monkey/lexer"
 	"monkey/token"
@@ -11,16 +12,25 @@ type Parser struct {
 
 	curToken  token.Token
 	peekToken token.Token
+
+	errors []string
 }
 
 func New(lex *lexer.Lexer) *Parser {
-	par := &Parser{lex: lex}
+	par := &Parser{
+		lex:    lex,
+		errors: []string{},
+	}
 
 	// Read twice to set both curToken and peekToken
 	par.advanceTokens()
 	par.advanceTokens()
 
 	return par
+}
+
+func (par *Parser) Errors() []string {
+	return par.errors
 }
 
 func (par *Parser) advanceTokens() {
@@ -54,16 +64,15 @@ func (par *Parser) parseStatement() ast.Statement {
 func (par *Parser) parseLetStatement() ast.Statement {
 	stmt := &ast.LetStatement{Token: par.curToken}
 
-	if !par.peekTokenIs(token.IDENT) {
+	if !par.peekAssertAdvance(token.IDENT) {
 		return nil
 	}
-	par.advanceTokens()
+
 	stmt.Name = &ast.Identifier{Token: par.curToken, Value: par.curToken.Literal}
 
-	if !par.peekTokenIs(token.ASSIGN) {
+	if !par.peekAssertAdvance(token.ASSIGN) {
 		return nil
 	}
-	par.advanceTokens()
 
 	//TODO: Skipping expressions for now (until I learn how to do it)
 
@@ -80,4 +89,19 @@ func (par *Parser) curTokenIs(t token.TokenType) bool {
 
 func (par *Parser) peekTokenIs(t token.TokenType) bool {
 	return par.peekToken.Type == t
+}
+
+func (par *Parser) peekAssertAdvance(t token.TokenType) bool {
+	if par.peekTokenIs(t) {
+		par.advanceTokens()
+		return true
+	} else {
+		par.appendNextTokenError(t)
+		return false
+	}
+}
+
+func (par *Parser) appendNextTokenError(t token.TokenType) {
+	msg := fmt.Sprintf("expected next token to be %s, but got %s instead", t, par.peekToken.Type)
+	par.errors = append(par.errors, msg)
 }
