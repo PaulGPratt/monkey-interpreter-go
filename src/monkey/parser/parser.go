@@ -29,5 +29,53 @@ func (par *Parser) advanceTokens() {
 }
 
 func (par *Parser) ParseProgram() *ast.Program {
-	return nil
+	program := &ast.Program{}
+	program.Statements = []ast.Statement{}
+
+	for par.curToken.Type != token.EOF {
+		stmt := par.parseStatement()
+		if stmt != nil {
+			program.Statements = append(program.Statements, stmt)
+		}
+		par.advanceTokens()
+	}
+	return program
+}
+
+func (par *Parser) parseStatement() ast.Statement {
+	switch par.curToken.Type {
+	case token.LET:
+		return par.parseLetStatement()
+	default:
+		return nil
+	}
+}
+
+func (par *Parser) parseLetStatement() ast.Statement {
+	stmt := &ast.LetStatement{Token: par.curToken}
+
+	if !par.peekTokenIs(token.IDENT) {
+		return nil
+	}
+	par.advanceTokens()
+	stmt.Name = &ast.Identifier{Token: par.curToken, Value: par.curToken.Literal}
+
+	if !par.peekTokenIs(token.ASSIGN) {
+		return nil
+	}
+	par.advanceTokens()
+
+	for !par.curTokenIs(token.SEMICOLON) {
+		par.advanceTokens()
+	}
+
+	return stmt
+}
+
+func (par *Parser) curTokenIs(t token.TokenType) bool {
+	return par.curToken.Type == t
+}
+
+func (par *Parser) peekTokenIs(t token.TokenType) bool {
+	return par.peekToken.Type == t
 }
