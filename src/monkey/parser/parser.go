@@ -56,6 +56,8 @@ func (par *Parser) parseStatement() ast.Statement {
 	switch par.curToken.Type {
 	case token.LET:
 		return par.parseLetStatement()
+	case token.RETURN:
+		return par.parseReturnStatement()
 	default:
 		return nil
 	}
@@ -73,6 +75,20 @@ func (par *Parser) parseLetStatement() ast.Statement {
 	if !par.peekAssertAdvance(token.ASSIGN) {
 		return nil
 	}
+
+	//TODO: Skipping expressions for now (until I learn how to do it)
+
+	for !par.curTokenIs(token.SEMICOLON) {
+		par.advanceTokens()
+	}
+
+	return stmt
+}
+
+func (par *Parser) parseReturnStatement() ast.Statement {
+	stmt := &ast.ReturnStatement{Token: par.curToken}
+
+	par.advanceTokens()
 
 	//TODO: Skipping expressions for now (until I learn how to do it)
 
