@@ -107,3 +107,12 @@ type Identifier struct {
 func (id *Identifier) expressionNode()      {}
 func (id *Identifier) TokenLiteral() string { return id.Token.Literal }
 func (id *Identifier) String() string       { return id.Value }
+
+type IntegerLiteral struct {
+	Token token.Token
+	Value int64
+}
+
+func (il *IntegerLiteral) expressionNode()      {}
+func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Literal }
+func (il *IntegerLiteral) String() string       { return il.Token.Literal }
