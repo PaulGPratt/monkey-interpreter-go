@@ -56,6 +56,8 @@ func New(lex *lexer.Lexer) *Parser {
 	par.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	par.registerPrefix(token.IDENT, par.parseIdentifier)
 	par.registerPrefix(token.INT, par.parseIntegerLiteral)
+	par.registerPrefix(token.TRUE, par.parseBoolean)
+	par.registerPrefix(token.FALSE, par.parseBoolean)
 	par.registerPrefix(token.BANG, par.parsePrefixExpression)
 	par.registerPrefix(token.MINUS, par.parsePrefixExpression)
 
@@ -81,11 +83,6 @@ func (par *Parser) Errors() []string {
 	return par.errors
 }
 
-func (par *Parser) advanceTokens() {
-	par.curToken = par.peekToken
-	par.peekToken = par.lex.NextToken()
-}
-
 func (par *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
@@ -98,6 +95,11 @@ func (par *Parser) ParseProgram() *ast.Program {
 		par.advanceTokens()
 	}
 	return program
+}
+
+func (par *Parser) advanceTokens() {
+	par.curToken = par.peekToken
+	par.peekToken = par.lex.NextToken()
 }
 
 func (par *Parser) parseStatement() ast.Statement {
@@ -124,7 +126,9 @@ func (par *Parser) parseLetStatement() ast.Statement {
 		return nil
 	}
 
-	//TODO: Skipping expressions for now (until I learn how to do it)
+	par.advanceTokens()
+
+	stmt.Value = par.parseExpression(LOWEST)
 
 	for !par.curTokenIs(token.SEMICOLON) {
 		par.advanceTokens()
@@ -138,7 +142,7 @@ func (par *Parser) parseReturnStatement() ast.Statement {
 
 	par.advanceTokens()
 
-	//TODO: Skipping expressions for now (until I learn how to do it)
+	stmt.Value = par.parseExpression(LOWEST)
 
 	for !par.curTokenIs(token.SEMICOLON) {
 		par.advanceTokens()
@@ -196,6 +200,10 @@ func (par *Parser) parseIntegerLiteral() ast.Expression {
 
 	lit.Value = value
 	return lit
+}
+
+func (par *Parser) parseBoolean() ast.Expression {
+	return &ast.Boolean{Token: par.curToken, Value: par.curTokenIs(token.TRUE)}
 }
 
 func (par *Parser) parsePrefixExpression() ast.Expression {
