@@ -28,6 +28,7 @@ var precedences = map[token.TokenType]int{
 	token.MINUS:    SUM,
 	token.SLASH:    PRODUCT,
 	token.ASTERISK: PRODUCT,
+	token.LPAREN:   CALL,
 }
 
 type (
@@ -74,6 +75,7 @@ func New(lex *lexer.Lexer) *Parser {
 	par.registerInfix(token.NOT_EQ, par.parseInfixExpression)
 	par.registerInfix(token.LT, par.parseInfixExpression)
 	par.registerInfix(token.GT, par.parseInfixExpression)
+	par.registerInfix(token.LPAREN, par.parseCallExpression)
 
 	// Read twice to set both curToken and peekToken
 	par.advanceTokens()
@@ -230,6 +232,36 @@ func (par *Parser) parseInfixExpression(leftToken ast.Expression) ast.Expression
 	expression.Right = par.parseExpression(precedence)
 
 	return expression
+}
+
+func (par *Parser) parseCallExpression(functionIdentifier ast.Expression) ast.Expression {
+	exp := &ast.CallExpression{Token: par.curToken, Function: functionIdentifier}
+	exp.Arguments = par.parseCallArguments()
+	return exp
+}
+
+func (par *Parser) parseCallArguments() []ast.Expression {
+	args := []ast.Expression{}
+
+	if par.peekTokenIs(token.RPAREN) {
+		par.advanceTokens()
+		return nil
+	}
+
+	par.advanceTokens()
+	args = append(args, par.parseExpression(LOWEST))
+
+	for par.peekTokenIs(token.COMMA) {
+		par.advanceTokens()
+		par.advanceTokens()
+		args = append(args, par.parseExpression(LOWEST))
+	}
+
+	if !par.peekAssertAdvance(token.RPAREN) {
+		return nil
+	}
+
+	return args
 }
 
 func (par *Parser) parseGroupedExpression() ast.Expression {
