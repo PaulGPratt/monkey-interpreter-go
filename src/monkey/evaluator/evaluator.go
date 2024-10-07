@@ -31,6 +31,11 @@ func Eval(node ast.Node) object.Object {
 	case *ast.PrefixExpression:
 		right := Eval(node.Right)
 		return evalPrefixExpression(node.Operator, right)
+	case *ast.InfixExpression:
+		left := Eval(node.Left)
+		right := Eval(node.Right)
+		return evalInfixExpression(node.Operator, left, right)
+
 	}
 
 	return nil
@@ -60,7 +65,7 @@ func evalPrefixExpression(operator string, right object.Object) object.Object {
 	case "!":
 		return evalBangOperatorExpression(right)
 	case "-":
-		return evalMinusOperatorExpression(right)
+		return evalMinusPrefixOperatorExpression(right)
 	default:
 		return NULL
 	}
@@ -79,10 +84,65 @@ func evalBangOperatorExpression(right object.Object) object.Object {
 	}
 }
 
-func evalMinusOperatorExpression(right object.Object) object.Object {
+func evalMinusPrefixOperatorExpression(right object.Object) object.Object {
 	integer, ok := right.(*object.Integer)
 	if !ok {
 		return NULL
 	}
 	return &object.Integer{Value: -integer.Value}
+}
+
+func evalInfixExpression(operator string, left object.Object, right object.Object) object.Object {
+	switch operator {
+	case "+":
+		return evalPlusInfixOperatorExpression(left, right)
+	case "-":
+		return evalMinusInfixOperatorExpression(left, right)
+	case "*":
+		return evalAsteriskInfixOperatorExpression(left, right)
+	case "/":
+		return evalSlashInfixOperatorExpression(left, right)
+	default:
+		return NULL
+	}
+}
+
+func evalPlusInfixOperatorExpression(left object.Object, right object.Object) object.Object {
+	leftInteger, leftOk := left.(*object.Integer)
+	rightInteger, rightOk := right.(*object.Integer)
+	if !leftOk || !rightOk {
+		return NULL
+	}
+
+	return &object.Integer{Value: leftInteger.Value + rightInteger.Value}
+}
+
+func evalMinusInfixOperatorExpression(left object.Object, right object.Object) object.Object {
+	leftInteger, leftOk := left.(*object.Integer)
+	rightInteger, rightOk := right.(*object.Integer)
+	if !leftOk || !rightOk {
+		return NULL
+	}
+
+	return &object.Integer{Value: leftInteger.Value - rightInteger.Value}
+}
+
+func evalAsteriskInfixOperatorExpression(left object.Object, right object.Object) object.Object {
+	leftInteger, leftOk := left.(*object.Integer)
+	rightInteger, rightOk := right.(*object.Integer)
+	if !leftOk || !rightOk {
+		return NULL
+	}
+
+	return &object.Integer{Value: leftInteger.Value * rightInteger.Value}
+}
+
+func evalSlashInfixOperatorExpression(left object.Object, right object.Object) object.Object {
+	leftInteger, leftOk := left.(*object.Integer)
+	rightInteger, rightOk := right.(*object.Integer)
+	if !leftOk || !rightOk {
+		return NULL
+	}
+
+	return &object.Integer{Value: leftInteger.Value / rightInteger.Value}
 }
