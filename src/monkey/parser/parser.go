@@ -147,7 +147,7 @@ func (par *Parser) parseReturnStatement() ast.Statement {
 
 	par.advanceTokens()
 
-	stmt.Value = par.parseExpression(LOWEST)
+	stmt.ReturnValue = par.parseExpression(LOWEST)
 
 	for !par.curTokenIs(token.SEMICOLON) {
 		par.advanceTokens()
